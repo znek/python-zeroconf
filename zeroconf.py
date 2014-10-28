@@ -1271,10 +1271,24 @@ class Zeroconf(object):
             # the SO_REUSE* options have been set, so ignore it
             #
             pass
-        # self.socket.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_IF,
-        #    socket.inet_aton(self.intf) + socket.inet_aton('0.0.0.0'))
         self.socket.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP,
                                socket.inet_aton(_MDNS_ADDR) + socket.inet_aton('0.0.0.0'))
+
+        try:
+            self.socket.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP,
+                                   socket.inet_aton(_MDNS_ADDR) + socket.inet_aton(self.intf))
+        except Exception:
+            # OS X (tested on 10.9.5) will raise with "[Errno 48] Address already in use"
+            # while FreeBSD (tested on 10.x) will need this in order to receive multicast messages
+            pass
+
+        try:
+            self.socket.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_IF,
+                                   socket.inet_aton(self.intf) + socket.inet_aton('0.0.0.0'))
+        except Exception:
+            # OS X (tested on 10.9.5) will raise with "[Errno 48] Address already in use"
+            # while FreeBSD (tested on 10.x) will need this in order to receive multicast messages
+            pass
 
         self.listeners = []
         self.browsers = []
